@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { DataService } from '../data/data.service';
 import { MaCrossoverStrategy } from '../strategy/ma-crossover.strategy';
+import { RuntimeConfigService } from '../config/runtime-config.service';
 import { LoggerSvc } from '../monitoring/logger.service';
 import { BacktestResult, BacktestTrade, Bar } from '../strategy/types';
 
 @Injectable()
 export class BacktestService {
   constructor(
-    private readonly config: ConfigService,
+    private readonly runtimeConfig: RuntimeConfigService,
     private readonly data: DataService,
     private readonly strategy: MaCrossoverStrategy,
     private readonly logger: LoggerSvc,
@@ -95,9 +95,9 @@ export class BacktestService {
     return result;
   }
 
-  async runAll(days = 365, initialCapital = 100000): Promise<BacktestResult[]> {
-    const symbols = this.config.get<string[]>('symbols') ?? ['AAPL'];
-    return Promise.all(symbols.map(s => this.run(s, days, initialCapital)));
+  async runAll(days?: number, initialCapital = 100000): Promise<BacktestResult[]> {
+    const { symbols, backtestDays } = this.runtimeConfig.get();
+    return Promise.all(symbols.map(s => this.run(s, days ?? backtestDays, initialCapital)));
   }
 
   private computeSharpe(equityCurve: number[]): number {

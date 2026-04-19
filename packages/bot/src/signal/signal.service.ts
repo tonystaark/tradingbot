@@ -1,28 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { DataService } from '../data/data.service';
 import { MaCrossoverStrategy } from '../strategy/ma-crossover.strategy';
+import { RuntimeConfigService } from '../config/runtime-config.service';
 import { LoggerSvc } from '../monitoring/logger.service';
 import { SignalResult } from '../strategy/types';
 
 @Injectable()
 export class SignalService {
-  private readonly symbols: string[];
-
   constructor(
-    private readonly config: ConfigService,
+    private readonly runtimeConfig: RuntimeConfigService,
     private readonly data: DataService,
     private readonly strategy: MaCrossoverStrategy,
     private readonly logger: LoggerSvc,
-  ) {
-    this.symbols = this.config.get<string[]>('symbols') ?? ['AAPL'];
-  }
+  ) {}
 
   async generateSignals(): Promise<SignalResult[]> {
-    const barsMap = await this.data.fetchForSymbols(this.symbols);
+    const { symbols } = this.runtimeConfig.get();
+    const barsMap = await this.data.fetchForSymbols(symbols);
     const results: SignalResult[] = [];
 
-    for (const symbol of this.symbols) {
+    for (const symbol of symbols) {
       const bars = barsMap.get(symbol) ?? [];
       try {
         const result = this.strategy.computeSignal(bars);

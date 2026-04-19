@@ -2,13 +2,12 @@ import { MaCrossoverStrategy } from '../src/strategy/ma-crossover.strategy';
 import { DataService } from '../src/data/data.service';
 import { Bar } from '../src/strategy/types';
 
-function mockConfig(short = 3, long = 5) {
-  return { get: (key: string) => (key === 'strategy.shortWindow' ? short : key === 'strategy.longWindow' ? long : undefined) } as any;
+function mockRuntimeConfig(short = 3, long = 5) {
+  return { get: () => ({ shortWindow: short, longWindow: long, symbols: ['AAPL'], backtestDays: 1500 }) } as any;
 }
 
 function mockDataService() {
-  const svc = new DataService(null as any, null as any, null as any);
-  return svc;
+  return new DataService(null as any, null as any, null as any);
 }
 
 function makeBar(close: number, i: number): Bar {
@@ -21,7 +20,7 @@ describe('MaCrossoverStrategy', () => {
 
   beforeEach(() => {
     data = mockDataService();
-    strategy = new MaCrossoverStrategy(mockConfig(3, 5), data);
+    strategy = new MaCrossoverStrategy(mockRuntimeConfig(3, 5), data);
   });
 
   it('returns HOLD when insufficient data', () => {
@@ -32,7 +31,6 @@ describe('MaCrossoverStrategy', () => {
   });
 
   it('detects golden cross BUY signal', () => {
-    // Prices that create a golden cross: short MA crosses above long MA
     const closes = [10, 9, 8, 7, 6, 8, 12, 15, 20, 25];
     const bars = closes.map((c, i) => makeBar(c, i));
     const result = strategy.computeSignal(bars);

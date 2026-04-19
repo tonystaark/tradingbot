@@ -4,22 +4,20 @@ import { AlpacaService } from '../alpaca/alpaca.service';
 import { SignalService } from '../signal/signal.service';
 import { BacktestService } from '../backtest/backtest.service';
 import { TradingService } from '../trading/trading.service';
+import { RuntimeConfigService } from '../config/runtime-config.service';
 import { LoggerSvc } from '../monitoring/logger.service';
 
 @Controller('api')
 export class ApiController {
-  private readonly defaultBacktestDays: number;
-
   constructor(
     private readonly config: ConfigService,
+    private readonly runtimeConfig: RuntimeConfigService,
     private readonly alpaca: AlpacaService,
     private readonly signal: SignalService,
     private readonly backtest: BacktestService,
     private readonly trading: TradingService,
     private readonly logger: LoggerSvc,
-  ) {
-    this.defaultBacktestDays = this.config.get<number>('strategy.backtestDays') ?? 1500;
-  }
+  ) {}
 
   @Get('status')
   getStatus() {
@@ -56,14 +54,27 @@ export class ApiController {
     return this.signal.generateSignalForSymbol(symbol.toUpperCase());
   }
 
+  @Get('config')
+  getConfig() {
+    return this.runtimeConfig.get();
+  }
+
+  @Post('config')
+  updateConfig(@Body() body: { symbols?: string[]; shortWindow?: number; longWindow?: number; backtestDays?: number }) {
+    const updated = this.runtimeConfig.update(body);
+    this.logger.log(`Strategy config updated: ${JSON.stringify(updated)}`, 'ApiController');
+    return updated;
+  }
+
   @Get('backtest/:symbol')
   async runBacktest(@Param('symbol') symbol: string, @Query('days') days?: string) {
-    return this.backtest.run(symbol.toUpperCase(), days ? parseInt(days) : this.defaultBacktestDays);
+    const { backtestDays } = this.runtimeConfig.get();
+    return this.backtest.run(symbol.toUpperCase(), days ? parseInt(days) : backtestDays);
   }
 
   @Get('backtest')
   async runAllBacktests(@Query('days') days?: string) {
-    return this.backtest.runAll(days ? parseInt(days) : this.defaultBacktestDays);
+    return this.backtest.runAll(days ? parseInt(days) : undefined);
   }
 
   @Post('trading/kill')
