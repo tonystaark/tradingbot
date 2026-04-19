@@ -19,16 +19,20 @@ function generateBars(count: number): Bar[] {
   return bars;
 }
 
+function mockRuntimeConfig(symbols = ['AAPL'], short = 10, long = 20, backtestDays = 1500) {
+  return { get: () => ({ symbols, shortWindow: short, longWindow: long, backtestDays }) } as any;
+}
+
 describe('BacktestService', () => {
   let svc: BacktestService;
 
   beforeEach(() => {
-    const config = { get: (k: string) => (k === 'symbols' ? ['AAPL'] : undefined) } as any;
+    const runtimeConfig = mockRuntimeConfig();
     const data = new DataService(null as any, null as any, null as any);
     data.fetchHistorical = async () => generateBars(300);
-    const strategy = new MaCrossoverStrategy({ get: (k: string) => k === 'strategy.shortWindow' ? 10 : k === 'strategy.longWindow' ? 20 : undefined } as any, data);
+    const strategy = new MaCrossoverStrategy(runtimeConfig, data);
     const logger = { log: jest.fn(), error: jest.fn(), warn: jest.fn() } as any;
-    svc = new BacktestService(config, data, strategy, logger);
+    svc = new BacktestService(runtimeConfig, data, strategy, logger);
   });
 
   it('returns a valid backtest result', async () => {

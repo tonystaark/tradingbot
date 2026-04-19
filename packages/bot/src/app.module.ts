@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import configuration from './config/configuration';
+import { RuntimeConfigModule } from './config/runtime-config.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { AlpacaModule } from './alpaca/alpaca.module';
 import { DataModule } from './data/data.module';
@@ -18,6 +19,7 @@ import { ApiModule } from './api/api.module';
     ConfigModule.forRoot({ isGlobal: true, load: [configuration], envFilePath: ['.env', '../../.env'] }),
     ScheduleModule.forRoot(),
     MonitoringModule,
+    RuntimeConfigModule,
     AlpacaModule,
     DataModule,
     StrategyModule,
