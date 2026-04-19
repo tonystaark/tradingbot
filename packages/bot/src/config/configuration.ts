@@ -8,8 +8,9 @@ export default () => ({
   },
   symbols: (process.env.SYMBOLS ?? 'AAPL,MSFT,GOOGL').split(',').map(s => s.trim()),
   strategy: {
-    shortWindow: parseInt(process.env.MA_SHORT_WINDOW ?? '50', 10),
-    longWindow: parseInt(process.env.MA_LONG_WINDOW ?? '200', 10),
+    shortWindow: parseInt(process.env.MA_SHORT_WINDOW ?? '20', 10),
+    longWindow: parseInt(process.env.MA_LONG_WINDOW ?? '50', 10),
+    backtestDays: parseInt(process.env.BACKTEST_DAYS ?? '1500', 10),
   },
   risk: {
     riskPerTrade: parseFloat(process.env.RISK_PER_TRADE ?? '0.02'),

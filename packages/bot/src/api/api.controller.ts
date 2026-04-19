@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AlpacaService } from '../alpaca/alpaca.service';
 import { SignalService } from '../signal/signal.service';
 import { BacktestService } from '../backtest/backtest.service';
@@ -7,13 +8,18 @@ import { LoggerSvc } from '../monitoring/logger.service';
 
 @Controller('api')
 export class ApiController {
+  private readonly defaultBacktestDays: number;
+
   constructor(
+    private readonly config: ConfigService,
     private readonly alpaca: AlpacaService,
     private readonly signal: SignalService,
     private readonly backtest: BacktestService,
     private readonly trading: TradingService,
     private readonly logger: LoggerSvc,
-  ) {}
+  ) {
+    this.defaultBacktestDays = this.config.get<number>('strategy.backtestDays') ?? 1500;
+  }
 
   @Get('status')
   getStatus() {
@@ -52,12 +58,12 @@ export class ApiController {
 
   @Get('backtest/:symbol')
   async runBacktest(@Param('symbol') symbol: string, @Query('days') days?: string) {
-    return this.backtest.run(symbol.toUpperCase(), days ? parseInt(days) : 365);
+    return this.backtest.run(symbol.toUpperCase(), days ? parseInt(days) : this.defaultBacktestDays);
   }
 
   @Get('backtest')
   async runAllBacktests(@Query('days') days?: string) {
-    return this.backtest.runAll(days ? parseInt(days) : 365);
+    return this.backtest.runAll(days ? parseInt(days) : this.defaultBacktestDays);
   }
 
   @Post('trading/kill')
